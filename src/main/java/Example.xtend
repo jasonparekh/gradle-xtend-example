@@ -1,0 +1,4 @@
+class Example {
+  def example() {
+  }
+}

@@ -1,0 +1,70 @@
+apply plugin: 'java'
+
+// Allows generating an Eclipse project via 'gradle eclipse'
+apply plugin: 'eclipse'
+
+// TODO: clean up these definitions
+def xtendSrcDir = file('src/main/java')
+
+// Ideally would want this to be in build/ somewhere, but the Xtend Eclipse plugin
+// seems to put it as a peer of the Java source root (i.e. even if I tell it to
+// output to "/build/xtend-gen", it ends up outputing to "/src/main/build/xtend-gen")
+def xtendGenTargetDir = file('src/main/xtend-gen')
+
+repositories {
+  mavenCentral()
+  maven {
+    url "http://build.eclipse.org/common/xtend/maven/"
+  }
+}
+
+dependencies {
+  compile 'org.eclipse.xtend:org.eclipse.xtend.lib:2.3.0'
+  compile 'org.eclipse.xtext:org.eclipse.xtext.xbase.lib:2.3.0'
+}
+
+sourceSets {
+  main {
+    java {
+      srcDir xtendGenTargetDir
+    }
+  }
+}
+
+eclipse {
+  project {
+    natures 'org.eclipse.xtext.ui.shared.xtextNature'
+    buildCommand 'org.eclipse.xtext.ui.shared.xtextBuilder'
+  }
+}
+
+task compileXtend {
+  inputs.dir xtendSrcDir
+  outputs.dir xtendGenTargetDir
+
+  doLast {
+    def srcPath = xtendSrcDir.absolutePath
+    def targetPath = xtendGenTargetDir.absolutePath
+    def classpath = configurations.compile.asPath
+    org.eclipse.xtend.core.compiler.batch.Main.main(['-d', targetPath, '-cp', classpath, srcPath]
+        as String[])
+  }
+}
+
+tasks.compileJava.dependsOn compileXtend
+
+buildscript {
+  repositories {
+    mavenCentral()
+    maven {
+      url "http://build.eclipse.org/common/xtend/maven/"
+    }
+  }
+
+  dependencies {
+    classpath 'org.eclipse.xtend:org.eclipse.xtend.standalone:2.3.0'
+
+    // Workaround until https://bugs.eclipse.org/bugs/show_bug.cgi?id=387418 is fixed
+    classpath 'org.eclipse.emf:codegen:2.2.3'
+  }
+}

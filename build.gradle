@@ -62,9 +62,6 @@ buildscript {
   }
 
   dependencies {
-    classpath 'org.eclipse.xtend:org.eclipse.xtend.standalone:2.3.0'
-
-    // Workaround until https://bugs.eclipse.org/bugs/show_bug.cgi?id=387418 is fixed
-    classpath 'org.eclipse.emf:codegen:2.2.3'
+    classpath 'org.eclipse.xtend:org.eclipse.xtend.standalone:2.3.1-SNAPSHOT'
   }
 }

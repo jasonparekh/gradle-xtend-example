@@ -3,9 +3,10 @@ apply plugin: 'java'
 // Allows generating an Eclipse project via 'gradle eclipse'
 apply plugin: 'eclipse'
 
-// TODO: clean up these definitions
+// TODO clean up these definitions
 def xtendSrcDir = file('src/main/java')
 
+// TODO not sure if the below is still an issue with Xtend 2.4.0
 // Ideally would want this to be in build/ somewhere, but the Xtend Eclipse plugin
 // seems to put it as a peer of the Java source root (i.e. even if I tell it to
 // output to "/build/xtend-gen", it ends up outputing to "/src/main/build/xtend-gen")
@@ -19,8 +20,8 @@ repositories {
 }
 
 dependencies {
-  compile 'org.eclipse.xtend:org.eclipse.xtend.lib:2.3.0'
-  compile 'org.eclipse.xtext:org.eclipse.xtext.xbase.lib:2.3.0'
+  compile 'org.eclipse.xtend:org.eclipse.xtend.lib:2.4.0'
+  compile 'org.eclipse.xtext:org.eclipse.xtext.xbase.lib:2.4.0'
 }
 
 sourceSets {
@@ -38,6 +39,9 @@ eclipse {
   }
 }
 
+import org.apache.log4j.BasicConfigurator
+import org.eclipse.xtend.core.XtendStandaloneSetup
+import org.eclipse.xtend.core.compiler.batch.XtendBatchCompiler
 task compileXtend {
   inputs.dir xtendSrcDir
   outputs.dir xtendGenTargetDir
@@ -46,8 +50,15 @@ task compileXtend {
     def srcPath = xtendSrcDir.absolutePath
     def targetPath = xtendGenTargetDir.absolutePath
     def classpath = configurations.compile.asPath
-    org.eclipse.xtend.core.compiler.batch.Main.main(['-d', targetPath, '-cp', classpath, srcPath]
-        as String[])
+
+    BasicConfigurator.configure()
+    XtendBatchCompiler compiler = new XtendStandaloneSetup().createInjectorAndDoEMFRegistration().getInstance(XtendBatchCompiler.class)
+    compiler.setOutputPath(targetPath)
+    compiler.setClassPath(classpath)
+    compiler.setSourcePath(srcPath)
+    if (!compiler.compile()) {
+      throw new GradleException("Xtend compilation failed.");
+    }
   }
 }
 
@@ -62,6 +73,6 @@ buildscript {
   }
 
   dependencies {
-    classpath 'org.eclipse.xtend:org.eclipse.xtend.standalone:2.3.1-SNAPSHOT'
+    classpath 'org.eclipse.xtend:org.eclipse.xtend.standalone:2.4.0'
   }
 }
